@@ -1,0 +1,22 @@
+{
+  "name": "dangle",
+  "version": "1.0.0",
+  "description": "Dangle is a javascript UX library",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orange4glace/dangle.git"
+  },
+  "keywordes": [
+    "dangl"
+  ],
+  "author": "orange4glace",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/orange4glace/dangle/issues"
+  },
+  "homepage": "https://github.com/orange4glace/dangle#readme"
+}
