@@ -3,7 +3,6 @@ import { Dangle } from '../../lib/dangle';
 function updateDangle() {
   dangle.setOption({
     stretch: el.offsetWidth,
-    strecthThreshold: el.offsetWidth / 2,
     minStep: 0,
     maxStep: 4,
   });

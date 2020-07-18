@@ -21,41 +21,57 @@ interface DangleMouseEvent {
   pageY: number;
 }
 
+export interface DanglePower {
+  endStep: number;
+  duration: number;
+  easing: (t: number) => number;
+}
+
 export interface DangleOption {
   holdingTheshold?: number;
   holdingOrthogonalTheshold?: number;
-  flickThreshold?: number;
   stretch?: number;
-  strecthThreshold?: number;
   minStep?: number;
   maxStep?: number;
   padding?: number;
   interactable?: boolean;
-  danglingDuration?: number;
   mapEventToPosition?: (e: DangleMouseEvent) => number;
   mapEventToOrthogonalPosition?: (e: DangleMouseEvent) => number;
-  danglingEasingFunction?: (t: number) => number;
+  mapPositionToDanglePower?: (pos: number, dangle?: Dangle) => DanglePower;
+  mapValueToStep?: (value: number, dangle?: Dangle) => number;
 }
 
 const defaultOption: DangleOption = {
   holdingTheshold: 100,
   holdingOrthogonalTheshold: 10,
-  flickThreshold: 30,
   stretch: 100,
-  strecthThreshold: 50,
   minStep: -3,
   maxStep: 3,
   padding: 0,
   interactable: true,
-  danglingDuration: 300,
   mapEventToPosition: (e: DangleMouseEvent) => {
     return e.pageX;
   },
   mapEventToOrthogonalPosition: (e: DangleMouseEvent) => {
     return e.pageY;
   },
-  danglingEasingFunction: (t: number) => {
-    return t;
+  mapPositionToDanglePower: (pos: number, dangle: Dangle) => {
+    let danglingTargetStep: number;
+    let dpSign = pos >= 0 ? 1 : -1;
+    const nearestStep = dangle.getNearestStep();
+    if (Math.abs(pos) > 30) {
+      danglingTargetStep = nearestStep + 1 * dpSign;
+    } else {
+      danglingTargetStep = nearestStep;
+    }
+    return {
+      endStep: danglingTargetStep,
+      duration: 300,
+      easing: (t: number) => t,
+    };
+  },
+  mapValueToStep: (value: number, dangle: Dangle) => {
+    return dangle.getNearestStep();
   },
 };
 
@@ -218,19 +234,12 @@ export class Dangle {
         dpSum += dp.dp;
       }
     });
-    let danglingTargetStep: number;
-    let dpSign = dpSum >= 0 ? 1 : -1;
-    const nearestStep = this.getNearestStep();
-    if (Math.abs(dpSum) > this.option_.flickThreshold) {
-      danglingTargetStep = nearestStep + 1 * dpSign;
-    } else {
-      danglingTargetStep = nearestStep;
-    }
-    this.danglingTargetStep_ = danglingTargetStep;
+    const power = this.option_.mapPositionToDanglePower(dpSum, this);
+    this.danglingTargetStep_ = power.endStep;
     this.danglingStartValue_ = this.currentValue_;
     this.danglingEndValue_ = this.stepToValue(this.danglingTargetStep_);
-    this.currentDanglingEasingFunction_ = this.option_.danglingEasingFunction;
-    this.currentDanglingDuration_ = this.option_.danglingDuration;
+    this.currentDanglingEasingFunction_ = power.easing;
+    this.currentDanglingDuration_ = power.duration;
     requestAnimationFrame(this.dangling);
     this.setState(DangleState.DANGLING);
   }
@@ -262,36 +271,37 @@ export class Dangle {
     const lastStep = this.currentStep_;
     const lastValue = this.currentValue_;
     this.currentValue_ = this.clampValue(value);
-    const sign = value >= 0 ? 1 : -1;
-    this.currentStep_ = this.clampStep(Math.floor(Math.abs(value)) * sign);
+    this.currentStep_ = this.clampStep(
+      this.option_.mapValueToStep(this.currentValue_)
+    );
     lastValue !== this.currentValue_ &&
       (this.onDidChangeValue as Subject<number>).next(this.currentValue_);
     lastStep !== this.currentStep_ &&
       (this.onDidChangeStep as Subject<number>).next(this.currentStep_);
   }
 
-  private valueToStep(value: number): number {
+  public valueToStep(value: number): number {
     return value;
   }
 
-  private stepToValue(step: number): number {
+  public stepToValue(step: number): number {
     return step;
   }
 
-  private clampValue(value: number): number {
+  public clampValue(value: number): number {
     const minValue = this.valueToStep(this.option_.minStep);
     const maxValue = this.valueToStep(this.option_.maxStep);
     return Math.max(minValue, Math.min(maxValue, value));
   }
 
-  private clampStep(value: number): number {
+  public clampStep(value: number): number {
     return Math.max(
       this.option_.minStep,
       Math.min(this.option_.maxStep, value)
     );
   }
 
-  private getNearestStep(): number {
+  public getNearestStep(): number {
     return Math.round(Math.abs(this.currentValue_));
   }
 

@@ -4,7 +4,8 @@
   "description": "Dangle is a javascript UX library",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-example": "webpack --config webpack.example.config.js --watch"
   },
   "repository": {
     "type": "git",
@@ -30,7 +31,8 @@
     "rollup": "^2.21.0",
     "ts-loader": "^8.0.1",
     "typescript": "^3.9.7",
-    "webpack": "^4.43.0"
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.12"
   },
   "dependencies": {
     "rxjs": "^6.6.0"
